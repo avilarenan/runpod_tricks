@@ -1,6 +1,6 @@
 # Container start command
 ```
-bash -lc "/workspace/start_user.sh && exec /sbin/docker-init -- /opt/nvidia/nvidia_entrypoint.sh /start.sh"
+bash -lc "/workspace/runpod_tricks/start_user.sh && exec /sbin/docker-init -- /opt/nvidia/nvidia_entrypoint.sh /start.sh"
 ```
 
 # Container image

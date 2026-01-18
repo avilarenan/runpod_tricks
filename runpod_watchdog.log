@@ -1,2 +1,9 @@
-[2026-01-18 02:54:46] Runpod watchdog started.
-[2026-01-18 02:54:46] poll=60s idle=600s empty_queue_grace=0s mode=terminate
+[2026-01-18 11:17:03] Runpod watchdog started.
+[2026-01-18 11:17:03] Config: enabled=False idle=False queue=False idle_seconds=600 empty_queue_grace=0 poll=60 mode=terminate gpu_util=5.0 gpu_mem_frac=0.05
+[2026-01-18 11:17:05] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
+[2026-01-18 11:18:05] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
+[2026-01-18 11:19:06] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
+[2026-01-18 11:20:06] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
+[2026-01-18 11:21:06] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
+[2026-01-18 11:22:06] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
+[2026-01-18 11:23:06] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False

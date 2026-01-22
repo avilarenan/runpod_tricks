@@ -267,6 +267,15 @@ fi
 ensure_venv "$WORKSPACE/AlphaForecasting"
 ensure_venv "$WORKSPACE/AlphaMorphing"
 
+if [[ -f "$WORKSPACE/runpod_tricks/requirements.txt" ]]; then
+  log "Setting up runpod_tricks venv"
+  if [[ ! -d "$WORKSPACE/runpod_tricks/.venv" ]]; then
+    python3 -m venv "$WORKSPACE/runpod_tricks/.venv"
+  fi
+  mkdir -p "$WORKSPACE/.cache/pip"
+  PIP_CACHE_DIR="$WORKSPACE/.cache/pip" "$WORKSPACE/runpod_tricks/.venv/bin/pip3" install -r "$WORKSPACE/runpod_tricks/requirements.txt"
+fi
+
 configure_watchdog
 
 log "Fresh install complete."

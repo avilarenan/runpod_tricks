@@ -20,3 +20,4 @@ Environment variables:
 - `AF_R2_WORKSPACE_WORKERS` (optional): worker threads (default: `4`)
 - `AF_R2_ACCOUNT_ID`, `AF_R2_BUCKET`, `AF_R2_ENDPOINT` (optional): R2 connection info (non-sensitive)
 - `AF_R2_ACCESS_KEY`, `AF_R2_SECRET_KEY`, `AF_R2_TOKEN` (optional): R2 secrets (sensitive)
+- `AF_R2_ALLOW_FILE_SECRETS` (optional): allow reading secrets from `.secrets/r2.json` (`1`/`0`, default: `1`)

@@ -1,2 +1,8 @@
 runpod_config.json
 runpod_watchdog_state.json
+.secrets/
+.venv/
+__pycache__/
+*.pyc
+*.log
+*.tmp

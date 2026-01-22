@@ -27,14 +27,34 @@ class R2Config:
     prefix_workspace: str = "workspace/backups"
 
 
+def _env_first(*names: str) -> str:
+    for name in names:
+        value = os.getenv(name)
+        if value:
+            return value
+    return ""
+
+
 def _public_config_paths() -> Iterable[Path]:
-    env_path = os.getenv("AF_R2_PUBLIC_CONFIG") or os.getenv("R2_PUBLIC_CONFIG")
+    env_path = _env_first("AF_R2_PUBLIC_CONFIG", "R2_PUBLIC_CONFIG")
     paths = []
     if env_path:
         paths.append(Path(env_path))
     workspace = _workspace_root()
     paths.append(workspace / "AlphaForecasting" / "config" / "r2_public.json")
     paths.append(workspace / "AlphaMorphing" / "config" / "r2_public.json")
+    return paths
+
+
+def _secret_config_paths() -> Iterable[Path]:
+    env_path = _env_first("AF_R2_CONFIG", "R2_CONFIG")
+    paths = []
+    if env_path:
+        paths.append(Path(env_path))
+    workspace = _workspace_root()
+    paths.append(workspace / "AlphaForecasting" / ".secrets" / "r2.json")
+    paths.append(workspace / "AlphaMorphing" / ".secrets" / "r2.json")
+    paths.append(workspace / "runpod_tricks" / ".secrets" / "r2.json")
     return paths
 
 
@@ -48,17 +68,45 @@ def _load_public_config() -> dict:
     return {}
 
 
+def _load_secret_config() -> dict:
+    for path in _secret_config_paths():
+        try:
+            if path.exists():
+                return json.loads(path.read_text())
+        except Exception:
+            continue
+    return {}
+
+
 def load_r2_config() -> Optional[R2Config]:
     cfg = _load_public_config()
-    account_id = os.getenv("AF_R2_ACCOUNT_ID") or os.getenv("R2_ACCOUNT_ID") or cfg.get("account_id") or ""
-    bucket = os.getenv("AF_R2_BUCKET") or os.getenv("R2_BUCKET") or cfg.get("bucket") or ""
-    endpoint = os.getenv("AF_R2_ENDPOINT") or os.getenv("R2_ENDPOINT") or cfg.get("endpoint") or ""
-    access_key = os.getenv("AF_R2_ACCESS_KEY") or os.getenv("R2_ACCESS_KEY") or ""
-    secret_key = os.getenv("AF_R2_SECRET_KEY") or os.getenv("R2_SECRET_KEY") or ""
-    token = os.getenv("AF_R2_TOKEN") or os.getenv("R2_TOKEN")
-    prefix_workspace = os.getenv("AF_R2_PREFIX_WORKSPACE") or os.getenv("R2_PREFIX_WORKSPACE") or cfg.get(
-        "prefix_workspace"
-    ) or "workspace/backups"
+    allow_flag = _env_first("AF_R2_ALLOW_FILE_SECRETS", "R2_ALLOW_FILE_SECRETS")
+    allow_file_secrets = True
+    if allow_flag:
+        allow_file_secrets = allow_flag.lower() in {"1", "true", "yes", "on"}
+    secret_cfg = _load_secret_config() if allow_file_secrets else {}
+    account_id = _env_first("AF_R2_ACCOUNT_ID", "R2_ACCOUNT_ID") or cfg.get("account_id") or ""
+    bucket = _env_first("AF_R2_BUCKET", "R2_BUCKET") or cfg.get("bucket") or ""
+    endpoint = _env_first("AF_R2_ENDPOINT", "R2_ENDPOINT") or cfg.get("endpoint") or ""
+    access_key = _env_first(
+        "AF_R2_ACCESS_KEY",
+        "AF_R2_ACCESS_KEY_ID",
+        "R2_ACCESS_KEY",
+        "R2_ACCESS_KEY_ID",
+    ) or (secret_cfg.get("access_key") if allow_file_secrets else "")
+    secret_key = _env_first(
+        "AF_R2_SECRET_KEY",
+        "AF_R2_SECRET_ACCESS_KEY",
+        "AF_R2_SECRET_KEY_ID",
+        "R2_SECRET_KEY",
+        "R2_SECRET_ACCESS_KEY",
+    ) or (secret_cfg.get("secret_key") if allow_file_secrets else "")
+    token = _env_first("AF_R2_TOKEN", "R2_TOKEN") or (secret_cfg.get("token") if allow_file_secrets else None)
+    prefix_workspace = (
+        _env_first("AF_R2_PREFIX_WORKSPACE", "R2_PREFIX_WORKSPACE")
+        or cfg.get("prefix_workspace")
+        or "workspace/backups"
+    )
 
     if not endpoint and account_id:
         endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
@@ -298,6 +346,19 @@ def main() -> None:
     _setup_logging(args.verbose)
     cfg = load_r2_config()
     if not cfg:
+        missing = []
+        if not _env_first("AF_R2_ACCESS_KEY", "AF_R2_ACCESS_KEY_ID", "R2_ACCESS_KEY", "R2_ACCESS_KEY_ID"):
+            missing.append("AF_R2_ACCESS_KEY")
+        if not _env_first(
+            "AF_R2_SECRET_KEY",
+            "AF_R2_SECRET_ACCESS_KEY",
+            "AF_R2_SECRET_KEY_ID",
+            "R2_SECRET_KEY",
+            "R2_SECRET_ACCESS_KEY",
+        ):
+            missing.append("AF_R2_SECRET_KEY")
+        if missing:
+            raise SystemExit(f"R2 credentials missing: {', '.join(missing)}")
         raise SystemExit("R2 config not found; set AF_R2_* or config/r2_public.json")
 
     workers = args.workers

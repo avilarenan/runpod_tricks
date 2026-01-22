@@ -87,6 +87,7 @@ write_r2_config() {
   local prefix_morph_parquet=""
   local prefix_predictions=""
   local prefix_predictions_meta=""
+  local prefix_workspace=""
   local parquet_compression=""
 
   if [[ "$scope" == "AM" ]]; then
@@ -102,6 +103,7 @@ write_r2_config() {
     prefix_morph_parquet="${AM_R2_PREFIX_MORPH_PARQUET:-${AF_R2_PREFIX_MORPH_PARQUET:-${R2_PREFIX_MORPH_PARQUET:-}}}"
     prefix_predictions="${AM_R2_PREFIX_PREDICTIONS:-${AF_R2_PREFIX_PREDICTIONS:-${R2_PREFIX_PREDICTIONS:-}}}"
     prefix_predictions_meta="${AM_R2_PREFIX_PREDICTIONS_META:-${AF_R2_PREFIX_PREDICTIONS_META:-${R2_PREFIX_PREDICTIONS_META:-}}}"
+    prefix_workspace="${AM_R2_PREFIX_WORKSPACE:-${AF_R2_PREFIX_WORKSPACE:-${R2_PREFIX_WORKSPACE:-}}}"
     parquet_compression="${AM_R2_PARQUET_COMPRESSION:-${AF_R2_PARQUET_COMPRESSION:-${R2_PARQUET_COMPRESSION:-}}}"
   else
     account_id="${AF_R2_ACCOUNT_ID:-${R2_ACCOUNT_ID:-}}"
@@ -116,6 +118,7 @@ write_r2_config() {
     prefix_morph_parquet="${AF_R2_PREFIX_MORPH_PARQUET:-${R2_PREFIX_MORPH_PARQUET:-}}"
     prefix_predictions="${AF_R2_PREFIX_PREDICTIONS:-${R2_PREFIX_PREDICTIONS:-}}"
     prefix_predictions_meta="${AF_R2_PREFIX_PREDICTIONS_META:-${R2_PREFIX_PREDICTIONS_META:-}}"
+    prefix_workspace="${AF_R2_PREFIX_WORKSPACE:-${R2_PREFIX_WORKSPACE:-}}"
     parquet_compression="${AF_R2_PARQUET_COMPRESSION:-${R2_PARQUET_COMPRESSION:-}}"
   fi
 
@@ -145,6 +148,7 @@ payload = {
   "prefix_morph_parquet": "${prefix_morph_parquet:-datasets/morphed/parquet}",
   "prefix_predictions": "${prefix_predictions:-predictions}",
   "prefix_predictions_meta": "${prefix_predictions_meta:-}",
+  "prefix_workspace": "${prefix_workspace:-workspace/backups}",
   "parquet_compression": "${parquet_compression:-zstd}",
 }
 if include_secrets:

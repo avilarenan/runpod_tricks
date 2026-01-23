@@ -3,6 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORKSPACE="${WORKSPACE:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+SECRETS_BUNDLE_PATH="${SECRETS_BUNDLE_PATH:-$WORKSPACE/secrets_bundle.json}"
+RESTORE_WORKSPACE="${RESTORE_WORKSPACE:-auto}"
+RESTORE_WORKSPACE_LOG="${RESTORE_WORKSPACE_LOG:-$WORKSPACE/restore_workspace_r2.log}"
 
 log() {
   echo "[fresh_install] $*"
@@ -17,6 +20,70 @@ require_cmd() {
     echo "[fresh_install][ERROR] Missing required command: $1" >&2
     exit 1
   fi
+}
+
+load_secrets_bundle() {
+  local path="$1"
+  if [[ ! -f "$path" ]]; then
+    warn "Secrets bundle not found at $path; relying on env vars."
+    return 0
+  fi
+  local exports
+  exports="$(python3 - <<'PY' "$path"
+import json
+import os
+import shlex
+import sys
+
+path = sys.argv[1]
+try:
+    data = json.loads(open(path).read())
+except Exception as exc:
+    print(f'echo \"[fresh_install][WARN] Failed to read {path}: {exc}\" >&2')
+    sys.exit(0)
+
+keys = [
+    "AF_R2_ACCESS_KEY",
+    "AF_R2_SECRET_KEY",
+    "AF_R2_TOKEN",
+    "AF_DB_URL",
+    "RUNPOD_API_KEY",
+]
+
+for key in keys:
+    value = data.get(key)
+    if value is None or value == "":
+        continue
+    if os.environ.get(key):
+        continue
+    print(f'export {key}={shlex.quote(str(value))}')
+PY
+)"
+  if [[ -n "$exports" ]]; then
+    eval "$exports"
+  fi
+}
+
+should_restore_workspace() {
+  local setting="${RESTORE_WORKSPACE,,}"
+  case "$setting" in
+    1|true|yes|on)
+      return 0
+      ;;
+    0|false|no|off)
+      return 1
+      ;;
+    auto|"")
+      if [[ -f "$SECRETS_BUNDLE_PATH" ]]; then
+        return 0
+      fi
+      return 1
+      ;;
+    *)
+      warn "Unknown RESTORE_WORKSPACE value '${RESTORE_WORKSPACE}'; skipping restore."
+      return 1
+      ;;
+  esac
 }
 
 infer_repo_url() {
@@ -240,6 +307,8 @@ PY
 require_cmd git
 require_cmd python3
 
+load_secrets_bundle "$SECRETS_BUNDLE_PATH"
+
 log "Configuring git"
 ensure_git_config
 
@@ -262,6 +331,21 @@ if [[ "${WRITE_DB_CONFIG:-}" == "1" || "${AF_WRITE_DB_CONFIG:-}" == "1" ]]; then
   write_db_config "$WORKSPACE/AlphaForecasting/runs/db_config.json"
 else
   warn "Skipping DB config file write; set WRITE_DB_CONFIG=1 to persist AF_DB_URL."
+fi
+
+if should_restore_workspace; then
+  if [[ -f "$WORKSPACE/runpod_tricks/restore_workspace_r2.py" ]]; then
+    log "Restoring workspace state (logging to $RESTORE_WORKSPACE_LOG)"
+    python3 "$WORKSPACE/runpod_tricks/restore_workspace_r2.py" \
+      --clean \
+      --link-codex-home \
+      --log-file "$RESTORE_WORKSPACE_LOG" \
+      --no-stdout || warn "Workspace restore failed; see $RESTORE_WORKSPACE_LOG"
+  else
+    warn "restore_workspace_r2.py not found; skipping workspace restore."
+  fi
+else
+  log "Skipping workspace restore."
 fi
 
 ensure_venv "$WORKSPACE/AlphaForecasting"

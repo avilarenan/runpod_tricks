@@ -8,6 +8,8 @@ from pathlib import Path
 import json
 import logging
 import os
+import shutil
+import stat
 import time
 from typing import Iterable, Optional, Tuple
 
@@ -55,6 +57,7 @@ def _secret_config_paths() -> Iterable[Path]:
     paths.append(workspace / "AlphaForecasting" / ".secrets" / "r2.json")
     paths.append(workspace / "AlphaMorphing" / ".secrets" / "r2.json")
     paths.append(workspace / "runpod_tricks" / ".secrets" / "r2.json")
+    paths.append(workspace / "secrets_bundle.json")
     return paths
 
 
@@ -68,11 +71,48 @@ def _load_public_config() -> dict:
     return {}
 
 
+def _normalize_secret_config(cfg: dict) -> dict:
+    if not isinstance(cfg, dict):
+        return {}
+    normalized = dict(cfg)
+    aliases = {
+        "access_key": (
+            "access_key",
+            "AF_R2_ACCESS_KEY",
+            "AF_R2_ACCESS_KEY_ID",
+            "R2_ACCESS_KEY",
+            "R2_ACCESS_KEY_ID",
+        ),
+        "secret_key": (
+            "secret_key",
+            "AF_R2_SECRET_KEY",
+            "AF_R2_SECRET_ACCESS_KEY",
+            "AF_R2_SECRET_KEY_ID",
+            "R2_SECRET_KEY",
+            "R2_SECRET_ACCESS_KEY",
+        ),
+        "token": ("token", "AF_R2_TOKEN", "R2_TOKEN"),
+        "account_id": ("account_id", "AF_R2_ACCOUNT_ID", "R2_ACCOUNT_ID"),
+        "bucket": ("bucket", "AF_R2_BUCKET", "R2_BUCKET"),
+        "endpoint": ("endpoint", "AF_R2_ENDPOINT", "R2_ENDPOINT"),
+        "prefix_workspace": ("prefix_workspace", "AF_R2_PREFIX_WORKSPACE", "R2_PREFIX_WORKSPACE"),
+    }
+    for dest, keys in aliases.items():
+        if normalized.get(dest):
+            continue
+        for key in keys:
+            value = cfg.get(key)
+            if value:
+                normalized[dest] = value
+                break
+    return normalized
+
+
 def _load_secret_config() -> dict:
     for path in _secret_config_paths():
         try:
             if path.exists():
-                return json.loads(path.read_text())
+                return _normalize_secret_config(json.loads(path.read_text()))
         except Exception:
             continue
     return {}
@@ -85,9 +125,10 @@ def load_r2_config() -> Optional[R2Config]:
     if allow_flag:
         allow_file_secrets = allow_flag.lower() in {"1", "true", "yes", "on"}
     secret_cfg = _load_secret_config() if allow_file_secrets else {}
-    account_id = _env_first("AF_R2_ACCOUNT_ID", "R2_ACCOUNT_ID") or cfg.get("account_id") or ""
-    bucket = _env_first("AF_R2_BUCKET", "R2_BUCKET") or cfg.get("bucket") or ""
-    endpoint = _env_first("AF_R2_ENDPOINT", "R2_ENDPOINT") or cfg.get("endpoint") or ""
+    merged_cfg = {**cfg, **secret_cfg}
+    account_id = _env_first("AF_R2_ACCOUNT_ID", "R2_ACCOUNT_ID") or merged_cfg.get("account_id") or ""
+    bucket = _env_first("AF_R2_BUCKET", "R2_BUCKET") or merged_cfg.get("bucket") or ""
+    endpoint = _env_first("AF_R2_ENDPOINT", "R2_ENDPOINT") or merged_cfg.get("endpoint") or ""
     access_key = _env_first(
         "AF_R2_ACCESS_KEY",
         "AF_R2_ACCESS_KEY_ID",
@@ -104,7 +145,7 @@ def load_r2_config() -> Optional[R2Config]:
     token = _env_first("AF_R2_TOKEN", "R2_TOKEN") or (secret_cfg.get("token") if allow_file_secrets else None)
     prefix_workspace = (
         _env_first("AF_R2_PREFIX_WORKSPACE", "R2_PREFIX_WORKSPACE")
-        or cfg.get("prefix_workspace")
+        or merged_cfg.get("prefix_workspace")
         or "workspace/backups"
     )
 
@@ -113,8 +154,8 @@ def load_r2_config() -> Optional[R2Config]:
 
     if not (bucket and endpoint and access_key and secret_key):
         return None
-
-    return R2Config(
+    
+    ret = R2Config(
         account_id=account_id,
         bucket=bucket,
         endpoint=endpoint,
@@ -123,6 +164,15 @@ def load_r2_config() -> Optional[R2Config]:
         token=token,
         prefix_workspace=prefix_workspace,
     )
+
+    logger.debug(
+        "R2 config loaded for bucket=%s endpoint=%s prefix=%s",
+        ret.bucket,
+        ret.endpoint,
+        ret.prefix_workspace,
+    )
+
+    return ret
 
 
 class RollingEta:
@@ -161,9 +211,23 @@ def _fmt_duration(seconds: float) -> str:
     return f"{minutes:d}:{secs:02d}"
 
 
-def _setup_logging(verbose: bool) -> None:
+def _setup_logging(verbose: bool, log_file: Optional[Path], no_stdout: bool) -> None:
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(asctime)s | %(levelname)s | %(message)s")
+    handlers: list[logging.Handler] = []
+    if log_file:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+        file_handler.setLevel(level)
+        handlers.append(file_handler)
+    if not no_stdout:
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+        stream_handler.setLevel(level)
+        handlers.append(stream_handler)
+    if not handlers:
+        handlers.append(logging.StreamHandler())
+    logging.basicConfig(level=level, handlers=handlers)
 
 
 def _workspace_root() -> Path:
@@ -190,6 +254,94 @@ def _client():
         region_name="auto",
         config=Config(signature_version="s3v4"),
     )
+
+
+def _is_exec_candidate(path: Path) -> bool:
+    try:
+        with path.open("rb") as handle:
+            head = handle.read(4)
+    except OSError:
+        return False
+    if head.startswith(b"#!"):
+        return True
+    return head == b"\x7fELF"
+
+
+def _fix_vscode_exec_bits() -> int:
+    root = _workspace_root() / ".vscode-server"
+    if not root.exists():
+        return 0
+    updated = 0
+    for dirpath, _, filenames in os.walk(root):
+        for name in filenames:
+            path = Path(dirpath) / name
+            try:
+                st = os.lstat(path)
+            except OSError:
+                continue
+            if stat.S_ISLNK(st.st_mode):
+                continue
+            if st.st_mode & stat.S_IXUSR:
+                continue
+            if not _is_exec_candidate(path):
+                continue
+            try:
+                os.chmod(path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                updated += 1
+            except OSError:
+                continue
+    return updated
+
+
+def _on_rmtree_error(func, path, exc_info) -> None:
+    try:
+        os.chmod(path, stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+        func(path)
+    except Exception:
+        pass
+
+
+def _remove_workspace_dirs() -> None:
+    root = _workspace_root()
+    for name in (".vscode-server", ".codex"):
+        target = root / name
+        if not target.exists() and not target.is_symlink():
+            continue
+        if target.is_symlink():
+            try:
+                target.unlink()
+            except OSError:
+                continue
+        else:
+            shutil.rmtree(target, onerror=_on_rmtree_error)
+
+
+def _ensure_codex_home_link() -> Optional[Path]:
+    workspace_codex = _workspace_root() / ".codex"
+    workspace_codex.mkdir(parents=True, exist_ok=True)
+    home_codex = Path.home() / ".codex"
+    if home_codex.is_symlink():
+        try:
+            if home_codex.resolve() == workspace_codex.resolve():
+                return home_codex
+        except OSError:
+            pass
+        try:
+            home_codex.unlink()
+        except OSError:
+            return None
+    elif home_codex.exists():
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        backup = home_codex.with_name(f".codex.bak-{timestamp}")
+        try:
+            home_codex.rename(backup)
+        except OSError:
+            return None
+    try:
+        home_codex.symlink_to(workspace_codex)
+    except OSError:
+        return None
+    return home_codex
 
 
 def _list_objects(prefix: str) -> Iterable[dict]:
@@ -340,10 +492,32 @@ def main() -> None:
         action="store_true",
         help="Force download even when local file looks up to date",
     )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Delete existing .codex/.vscode-server before restoring",
+    )
+    parser.add_argument(
+        "--link-codex-home",
+        action="store_true",
+        help="Symlink ~/.codex to /workspace/.codex after restore",
+    )
+    parser.add_argument(
+        "--log-file",
+        type=str,
+        default=None,
+        help="Write logs to this file",
+    )
+    parser.add_argument(
+        "--no-stdout",
+        action="store_true",
+        help="Suppress stdout logging (useful with --log-file)",
+    )
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
     args = parser.parse_args()
 
-    _setup_logging(args.verbose)
+    log_file = Path(args.log_file).expanduser() if args.log_file else None
+    _setup_logging(args.verbose, log_file, args.no_stdout)
     cfg = load_r2_config()
     if not cfg:
         missing = []
@@ -359,7 +533,7 @@ def main() -> None:
             missing.append("AF_R2_SECRET_KEY")
         if missing:
             raise SystemExit(f"R2 credentials missing: {', '.join(missing)}")
-        raise SystemExit("R2 config not found; set AF_R2_* or config/r2_public.json")
+        raise SystemExit("R2 config not found; set AF_R2_* or config/r2_public.json or secrets_bundle.json")
 
     workers = args.workers
     if workers is None:
@@ -368,7 +542,19 @@ def main() -> None:
     logger.info("Using %d worker(s) for workspace restore.", workers)
     logger.info("Workspace root: %s", _workspace_root())
     logger.info("Prefix: %s", cfg.prefix_workspace)
+    if args.clean:
+        logger.info("Cleaning existing .codex/.vscode-server before restore.")
+        _remove_workspace_dirs()
     restore_workspace(cfg, workers, args.overwrite)
+    fixed = _fix_vscode_exec_bits()
+    if fixed:
+        logger.info("Fixed exec bits for %d file(s) under .vscode-server.", fixed)
+    if args.link_codex_home:
+        linked = _ensure_codex_home_link()
+        if linked:
+            logger.info("Linked %s -> %s", linked, _workspace_root() / ".codex")
+        else:
+            logger.warning("Failed to link ~/.codex to /workspace/.codex.")
     logger.info("Workspace restore completed.")
 
 

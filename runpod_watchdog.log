@@ -1,37 +1,45 @@
-[2026-01-22 22:14:31] Runpod watchdog started.
-[2026-01-22 22:14:31] Config: enabled=False idle=False queue=False idle_seconds=600 empty_queue_grace=0 poll=60 mode=terminate gpu_util=5.0 gpu_mem_frac=0.05
-[2026-01-22 22:14:38] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:15:38] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:16:38] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:17:39] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:18:39] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:19:39] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:20:39] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:21:40] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:22:40] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:23:40] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:24:40] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:25:41] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:26:41] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:27:41] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:28:41] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:29:42] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:30:42] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:31:42] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:32:42] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:33:43] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:34:43] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:35:43] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:36:43] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:37:44] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:38:44] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:39:44] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:40:44] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:41:44] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:42:45] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:43:45] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:44:46] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:45:46] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:46:46] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:47:46] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
-[2026-01-22 22:48:46] Status: enabled=false running=0 queued=0 paused=0 gpu_active=False
+[2026-01-24 02:55:13] Runpod watchdog started.
+[2026-01-24 02:55:13] Config: enabled=False idle=False queue=False idle_seconds=600 empty_queue_grace=0 poll=60 mode=terminate gpu_util=5.0 gpu_mem_frac=0.05
+[2026-01-24 02:55:13] Status: enabled=false running=26 queued=1199 paused=0 gpu_active=True
+[2026-01-24 02:56:13] Status: enabled=false running=23 queued=1199 paused=0 gpu_active=True
+[2026-01-24 02:57:13] Config: enabled=True idle=True queue=True idle_seconds=600 empty_queue_grace=0 poll=60 mode=terminate gpu_util=5.0 gpu_mem_frac=0.05
+[2026-01-24 02:57:14] Status: enabled=true running=22 queued=1197 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 02:58:14] Status: enabled=true running=23 queued=1194 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 02:59:14] Status: enabled=true running=22 queued=1189 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:00:15] Status: enabled=true running=24 queued=1182 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:01:15] Status: enabled=true running=24 queued=1175 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:02:15] Status: enabled=true running=26 queued=1164 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:03:16] Status: enabled=true running=26 queued=1159 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:04:16] Status: enabled=true running=26 queued=1150 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:05:16] Status: enabled=true running=26 queued=1147 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:06:17] Status: enabled=true running=25 queued=1138 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:07:17] Status: enabled=true running=26 queued=1132 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:08:17] Status: enabled=true running=26 queued=1128 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:09:18] Status: enabled=true running=26 queued=1123 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:10:18] Status: enabled=true running=26 queued=1116 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:11:18] Status: enabled=true running=26 queued=1114 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:12:18] Status: enabled=true running=26 queued=1112 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:13:19] Status: enabled=true running=26 queued=1103 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:14:19] Status: enabled=true running=24 queued=1098 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:15:19] Status: enabled=true running=24 queued=1090 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:16:20] Status: enabled=true running=26 queued=1079 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:17:20] Status: enabled=true running=26 queued=1072 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:18:20] Status: enabled=true running=28 queued=1059 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:19:21] Status: enabled=true running=27 queued=1056 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:20:21] Status: enabled=true running=26 queued=1047 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:21:21] Status: enabled=true running=23 queued=1045 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:22:21] Status: enabled=true running=29 queued=1028 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:23:22] Status: enabled=true running=28 queued=1020 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:24:22] Status: enabled=true running=26 queued=1015 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:25:22] Status: enabled=true running=27 queued=1008 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:26:23] Status: enabled=true running=27 queued=1001 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:27:23] Status: enabled=true running=26 queued=997 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:28:23] Status: enabled=true running=27 queued=993 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:29:24] Status: enabled=true running=26 queued=984 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:30:24] Status: enabled=true running=26 queued=978 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:31:24] Status: enabled=true running=26 queued=959 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:32:25] Status: enabled=true running=26 queued=934 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:33:25] Status: enabled=true running=27 queued=897 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:34:25] Status: enabled=true running=29 queued=852 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:35:25] Status: enabled=true running=29 queued=812 paused=0 gpu_active=True idle_for=0s empty_for=0s
+[2026-01-24 03:36:26] Status: enabled=true running=23 queued=775 paused=0 gpu_active=True idle_for=0s empty_for=0s

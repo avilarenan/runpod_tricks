@@ -38,6 +38,7 @@ def _load_config() -> Dict[str, object]:
     data.setdefault("queue_empty_enabled", data.get("terminate_on_empty_queue", False))
     data.setdefault("terminate_all", False)
     data.setdefault("db_path", os.getenv("AF_DB_PATH", "/workspace/AlphaForecasting/runs/experiments.sqlite"))
+    data.setdefault("db_url", os.getenv("AF_DB_URL", ""))
     return data
 
 
@@ -72,7 +73,7 @@ def _terminate_pod(api_key: str, pod_id: str, mode: str) -> None:
     _graphql_request(api_key, query)
 
 
-def _get_experiment_counts(db_path: str) -> Dict[str, int]:
+def _get_experiment_counts_sqlite(db_path: str) -> Dict[str, int]:
     counts = {"running": 0, "queued": 0, "paused": 0}
     path = Path(db_path)
     if not path.exists():
@@ -88,6 +89,29 @@ def _get_experiment_counts(db_path: str) -> Dict[str, int]:
     finally:
         conn.close()
     return counts
+
+
+def _get_experiment_counts_postgres(db_url: str) -> Dict[str, int]:
+    try:
+        import psycopg2  # type: ignore
+    except Exception as exc:  # pragma: no cover - optional dependency
+        raise RuntimeError("psycopg2-binary is required for Postgres watchdog support.") from exc
+    counts = {"running": 0, "queued": 0, "paused": 0}
+    with psycopg2.connect(db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT status, COUNT(*) as total FROM experiments GROUP BY status"
+            )
+            for status, total in cur.fetchall():
+                if status in counts:
+                    counts[status] = int(total)
+    return counts
+
+
+def _get_experiment_counts(db_path: str, db_url: str) -> Dict[str, int]:
+    if db_url:
+        return _get_experiment_counts_postgres(db_url)
+    return _get_experiment_counts_sqlite(db_path)
 
 
 def _gpu_active(util_threshold: float, mem_fraction_threshold: float) -> bool:
@@ -141,6 +165,7 @@ def main() -> None:
             empty_queue_grace = int(cfg.get("empty_queue_grace_seconds") or 0)
             terminate_all = bool(cfg.get("terminate_all"))
             db_path = str(cfg.get("db_path"))
+            db_url = str(cfg.get("db_url") or "").strip()
             enabled = bool(cfg.get("enabled", False))
             idle_enabled = bool(cfg.get("idle_enabled", False))
             queue_enabled = bool(cfg.get("queue_empty_enabled", cfg.get("terminate_on_empty_queue", False)))
@@ -171,7 +196,7 @@ def main() -> None:
                     )
                 )
 
-            counts = _get_experiment_counts(db_path)
+            counts = _get_experiment_counts(db_path, db_url)
             active_running = counts.get("running", 0)
             active_queued = counts.get("queued", 0)
             active_paused = counts.get("paused", 0)

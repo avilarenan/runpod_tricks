@@ -34,3 +34,11 @@ Secrets bundle support:
 `fresh_install.sh` notes:
 - Loads secrets from `secrets_bundle.json` when present.
 - If `RESTORE_WORKSPACE=auto` (default) and the secrets bundle exists, it runs the restore with `--clean`, `--link-codex-home`, and `--log-file /workspace/restore_workspace_r2.log`.
+
+## Watchdog
+Environment variables for `pod_watchdog.py`:
+- `RUNPOD_API_KEY` (required): Runpod API key.
+- `RUNPOD_POD_ID` (optional): terminate only the current pod.
+- `AF_DB_URL` (optional): Postgres connection string; when set, the watchdog reads
+  experiment status from Postgres instead of SQLite.
+- `AF_DB_PATH` (optional): SQLite DB path (only used when `AF_DB_URL` is empty).

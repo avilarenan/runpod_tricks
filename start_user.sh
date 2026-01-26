@@ -9,6 +9,20 @@ mkdir -p "$CODEX_HOME"
 rm -rf "$HOME/.codex" 2>/dev/null || true
 ln -sfn "$CODEX_HOME" "$HOME/.codex" || true
 
+# Cache dirs live on the persistent workspace volume
+export XDG_CACHE_HOME=/workspace/.cache
+export HF_HOME=/workspace/.cache/huggingface
+export HUGGINGFACE_HUB_CACHE="$HF_HOME/hub"
+export HF_HUB_CACHE="$HF_HOME/hub"
+export HF_DATASETS_CACHE="$HF_HOME/datasets"
+export TRANSFORMERS_CACHE="$HF_HOME/transformers"
+export TORCH_HOME=/workspace/.cache/torch
+
+mkdir -p "$XDG_CACHE_HOME" "$HF_HOME" "$HUGGINGFACE_HUB_CACHE" "$HF_DATASETS_CACHE" "$TRANSFORMERS_CACHE" "$TORCH_HOME"
+mkdir -p "$HOME/.cache"
+rm -rf "$HOME/.cache/huggingface" 2>/dev/null || true
+ln -sfn "$HF_HOME" "$HOME/.cache/huggingface" || true
+
 git config --global user.name "Renan"
 git config --global user.email "renandeluca01@gmail.com"
 

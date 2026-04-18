@@ -31,6 +31,11 @@ if ! command -v nvtop >/dev/null 2>&1; then
   DEBIAN_FRONTEND=noninteractive apt-get install -y nvtop
 fi
 
+if ! command -v gh >/dev/null 2>&1; then
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y gh
+fi
+
 WATCHDOG="/workspace/runpod_tricks/pod_watchdog.py"
 WATCHDOG_CONFIG="/workspace/runpod_tricks/runpod_config.json"
 WATCHDOG_LOG="/workspace/runpod_tricks/runpod_watchdog.log"

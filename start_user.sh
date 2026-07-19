@@ -36,6 +36,25 @@ if ! command -v gh >/dev/null 2>&1; then
   DEBIAN_FRONTEND=noninteractive apt-get install -y gh
 fi
 
+# Persistent GitHub CLI authentication
+PERSISTENT_GH_DIR="/workspace/.config/gh"
+
+mkdir -p "$PERSISTENT_GH_DIR" "$HOME/.config"
+chmod 700 "$PERSISTENT_GH_DIR"
+
+# Preserve an existing login the first time this is enabled.
+if [ -d "$HOME/.config/gh" ] && [ ! -L "$HOME/.config/gh" ]; then
+  cp -a "$HOME/.config/gh/." "$PERSISTENT_GH_DIR/"
+fi
+
+rm -rf "$HOME/.config/gh"
+ln -s "$PERSISTENT_GH_DIR" "$HOME/.config/gh"
+
+# Restore gh as the credential helper for HTTPS Git operations.
+if gh auth status >/dev/null 2>&1; then
+  gh auth setup-git
+fi
+
 WATCHDOG="/workspace/runpod_tricks/pod_watchdog.py"
 WATCHDOG_CONFIG="/workspace/runpod_tricks/runpod_config.json"
 WATCHDOG_LOG="/workspace/runpod_tricks/runpod_watchdog.log"

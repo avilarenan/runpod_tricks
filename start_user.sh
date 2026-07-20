@@ -26,6 +26,18 @@ ln -sfn "$HF_HOME" "$HOME/.cache/huggingface" || true
 git config --global user.name "Renan"
 git config --global user.email "renandeluca01@gmail.com"
 
+# Restore persistent SSH access for root without replacing provider/user keys.
+ROOT_SSH_DIR="/root/.ssh"
+ROOT_AUTHORIZED_KEYS="$ROOT_SSH_DIR/authorized_keys"
+PERSISTENT_SSH_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFS7zocYCJObhxhF9pH3MxZq65BLqBHHMnzzMKNZ8o3z codex-access-2026-07-19"
+
+install -d -m 700 "$ROOT_SSH_DIR"
+touch "$ROOT_AUTHORIZED_KEYS"
+chmod 600 "$ROOT_AUTHORIZED_KEYS"
+if ! grep -qxF -- "$PERSISTENT_SSH_PUBLIC_KEY" "$ROOT_AUTHORIZED_KEYS"; then
+  printf '%s\n' "$PERSISTENT_SSH_PUBLIC_KEY" >> "$ROOT_AUTHORIZED_KEYS"
+fi
+
 if ! command -v nvtop >/dev/null 2>&1; then
   apt-get update
   DEBIAN_FRONTEND=noninteractive apt-get install -y nvtop
